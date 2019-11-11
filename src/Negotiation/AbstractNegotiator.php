@@ -89,7 +89,7 @@ abstract class AbstractNegotiator
 	$result = [];
 
 	foreach($specificMatches as $match) {
-	  $result = $acceptedPriorities[$match->index];
+	  $result[] = $acceptedPriorities[$match->index];
 	}
 
 	return $result;
