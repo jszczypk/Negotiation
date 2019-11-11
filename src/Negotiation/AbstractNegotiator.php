@@ -52,6 +52,49 @@ abstract class AbstractNegotiator
         return null === $match ? null : $acceptedPriorities[$match->index];
     }
 
+    public function getOrdered(string $header, array $priorities, bool $strict = false): array
+    {
+        if (empty($priorities)) {
+            throw new InvalidArgument('A set of server priorities should be given.');
+        }
+
+        if (!$header) {
+            throw new InvalidArgument('The header string should not be empty.');
+        }
+
+        // Once upon a time, two `array_map` calls were sitting there, but for
+        // some reasons, they triggered `E_WARNING` time to time (because of
+        // PHP bug [55416](https://bugs.php.net/bug.php?id=55416). Now, they
+        // are gone.
+        // See: https://github.com/willdurand/Negotiation/issues/81
+        $acceptedHeaders = array();
+        foreach ($this->parseHeader($header) as $h) {
+            try {
+                $acceptedHeaders[] = $this->acceptFactory($h);
+            } catch (Exception\Exception $e) {
+                if ($strict) {
+                    throw $e;
+                }
+            }
+        }
+        $acceptedPriorities = array();
+        foreach ($priorities as $p) {
+            $acceptedPriorities[] = $this->acceptFactory($p);
+        }
+        $matches         = $this->findMatches($acceptedHeaders, $acceptedPriorities);
+        $specificMatches = array_reduce($matches, 'Negotiation\Match::reduce', []);
+
+	usort($specificMatches, 'Negotiation\Match::compare');
+
+	$result = [];
+
+	foreach($specificMatches as $match) {
+	  $result = $acceptedPriorities[$match->index];
+	}
+
+	return $result;
+    }
+
     /**
      * @param string $header A string containing an `Accept|Accept-*` header.
      *
