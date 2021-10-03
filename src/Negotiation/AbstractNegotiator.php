@@ -43,9 +43,9 @@ abstract class AbstractNegotiator
             $acceptedPriorities[] = $this->acceptFactory($p);
         }
         $matches         = $this->findMatches($acceptedHeaders, $acceptedPriorities);
-        $specificMatches = array_reduce($matches, 'Negotiation\Match::reduce', []);
+        $specificMatches = array_reduce($matches, 'Negotiation\AcceptMatch::reduce', []);
 
-        usort($specificMatches, 'Negotiation\Match::compare');
+        usort($specificMatches, 'Negotiation\AcceptMatch::compare');
 
         $match = array_shift($specificMatches);
 
@@ -98,7 +98,7 @@ abstract class AbstractNegotiator
     /**
      * @param string $header A string containing an `Accept|Accept-*` header.
      *
-     * @return [AcceptHeader] An ordered list of accept header elements
+     * @return AcceptHeader[] An ordered list of accept header elements
      */
     public function getOrderedElements($header)
     {
@@ -126,7 +126,7 @@ abstract class AbstractNegotiator
             $qB = $b[0];
 
             if ($qA == $qB) {
-                return $a[1] > $b[1];
+                return $a[1] <=> $b[1];
             }
 
             return ($qA > $qB) ? -1 : 1;
@@ -152,7 +152,7 @@ abstract class AbstractNegotiator
      * @param AcceptHeader $priority
      * @param integer      $index
      *
-     * @return Match|null Headers matched
+     * @return AcceptMatch|null Headers matched
      */
     protected function match(AcceptHeader $header, AcceptHeader $priority, $index)
     {
@@ -164,7 +164,7 @@ abstract class AbstractNegotiator
         if ($equal || $ac === '*') {
             $score = 1 * $equal;
 
-            return new Match($header->getQuality() * $priority->getQuality(), $score, $index);
+            return new AcceptMatch($header->getQuality() * $priority->getQuality(), $score, $index);
         }
 
         return null;
@@ -190,7 +190,7 @@ abstract class AbstractNegotiator
      * @param AcceptHeader[] $headerParts
      * @param Priority[]     $priorities  Configured priorities
      *
-     * @return Match[] Headers matched
+     * @return AcceptMatch[] Headers matched
      */
     private function findMatches(array $headerParts, array $priorities)
     {
