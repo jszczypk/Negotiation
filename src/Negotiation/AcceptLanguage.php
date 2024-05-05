@@ -18,9 +18,12 @@ final class AcceptLanguage extends BaseAccept implements AcceptHeader
 
         if (2 === count($parts)) {
             $this->language = $parts[0];
+            $this->script   = '';
             $this->region   = $parts[1];
         } elseif (1 === count($parts)) {
             $this->language = $parts[0];
+            $this->script   = '';
+            $this->region   = '';
         } elseif (3 === count($parts)) {
             $this->language = $parts[0];
             $this->script   = $parts[1];
